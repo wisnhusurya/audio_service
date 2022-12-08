@@ -9,13 +9,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  path_provider: ^2.0.1
+  path_provider: ^2.0.2
   audio_session: ^0.1.7
   just_audio: ^0.9.24
   flutter_tts: ^3.3.3
   device_info_plus: ^3.2.1
-  android_content_provider: ^0.2.0
-  permission_handler : ^8.3.0
+  # android_content_provider: ^0.0.1
+  permission_handler : ^8.0.0
   rxdart: ^0.27.2
   audio_service:
     path: ../

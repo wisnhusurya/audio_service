@@ -49,7 +49,7 @@ import 'dart:typed_data';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:android_content_provider/android_content_provider.dart';
+// import 'package:android_content_provider/android_content_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
@@ -137,50 +137,50 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _fetchSongs() async {
-    final cursor = await AndroidContentResolver.instance.query(
-      // MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-      uri: 'content://media/external/audio/media',
-      projection: Song.mediaStoreProjection,
-      selection: 'is_music != 0',
-      selectionArgs: null,
-      sortOrder: null,
-    );
-    try {
-      final songCount =
-          (await cursor!.batchedGet().getCount().commit()).first as int;
-      final batch = Song.createBatch(cursor);
-      final songsData = await batch.commitRange(0, songCount);
-      _songs = songsData.map((data) => Song.fromMediaStore(data)).toList();
-    } finally {
-      cursor?.close();
-    }
+    // final cursor = await AndroidContentResolver.instance.query(
+    //   // MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+    //   uri: 'content://media/external/audio/media',
+    //   projection: Song.mediaStoreProjection,
+    //   selection: 'is_music != 0',
+    //   selectionArgs: null,
+    //   sortOrder: null,
+    // );
+    // try {
+    //   final songCount =
+    //       (await cursor!.batchedGet().getCount().commit()).first as int;
+    //   final batch = Song.createBatch(cursor);
+    //   final songsData = await batch.commitRange(0, songCount);
+    //   _songs = songsData.map((data) => Song.fromMediaStore(data)).toList();
+    // } finally {
+    //   cursor?.close();
+    // }
   }
 
   Future<void> _fetchArts() async {
-    if (useScopedStorage) {
-      return;
-    }
-    final cursor = await AndroidContentResolver.instance.query(
-      // MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
-      uri: 'content://media/external/audio/albums',
-      projection: const ['_id', 'album_art'],
-      selection: 'album_art != 0',
-      selectionArgs: null,
-      sortOrder: null,
-    );
-    try {
-      final albumCount =
-          (await cursor!.batchedGet().getCount().commit()).first as int;
-      final batch = cursor.batchedGet()
-        ..getInt(0)
-        ..getString(1);
-      final albumsData = await batch.commitRange(0, albumCount);
-      for (final data in albumsData) {
-        albumArtPaths[data.first as int] = data.last as String;
-      }
-    } finally {
-      cursor?.close();
-    }
+    // if (useScopedStorage) {
+    //   return;
+    // }
+    // final cursor = await AndroidContentResolver.instance.query(
+    //   // MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
+    //   uri: 'content://media/external/audio/albums',
+    //   projection: const ['_id', 'album_art'],
+    //   selection: 'album_art != 0',
+    //   selectionArgs: null,
+    //   sortOrder: null,
+    // );
+    // try {
+    //   final albumCount =
+    //       (await cursor!.batchedGet().getCount().commit()).first as int;
+    //   final batch = cursor.batchedGet()
+    //     ..getInt(0)
+    //     ..getString(1);
+    //   final albumsData = await batch.commitRange(0, albumCount);
+    //   for (final data in albumsData) {
+    //     albumArtPaths[data.first as int] = data.last as String;
+    //   }
+    // } finally {
+    //   cursor?.close();
+    // }
   }
 
   @override
@@ -346,7 +346,7 @@ class SongArt extends StatefulWidget {
 }
 
 class _SongArtState extends State<SongArt> {
-  CancellationSignal? _loadSignal;
+  // CancellationSignal? _loadSignal;
   Uint8List? _bytes;
   bool loaded = false;
 
@@ -375,29 +375,29 @@ class _SongArtState extends State<SongArt> {
     if (!useScopedStorage) {
       return;
     }
-    _loadSignal?.cancel();
-    _loadSignal = CancellationSignal();
-    final cacheSize = getCacheSize();
-    try {
-      _bytes = await AndroidContentResolver.instance.loadThumbnail(
-        uri: widget.song.uri,
-        width: cacheSize,
-        height: cacheSize,
-        cancellationSignal: _loadSignal,
-      );
-    } catch (e) {
-      _bytes = null;
-    }
-    if (mounted) {
-      setState(() {
-        loaded = true;
-      });
-    }
+    // _loadSignal?.cancel();
+    // _loadSignal = CancellationSignal();
+    // final cacheSize = getCacheSize();
+    // try {
+    //   _bytes = await AndroidContentResolver.instance.loadThumbnail(
+    //     uri: widget.song.uri,
+    //     width: cacheSize,
+    //     height: cacheSize,
+    //     cancellationSignal: _loadSignal,
+    //   );
+    // } catch (e) {
+    //   _bytes = null;
+    // }
+    // if (mounted) {
+    //   setState(() {
+    //     loaded = true;
+    //   });
+    // }
   }
 
   @override
   void dispose() {
-    _loadSignal?.cancel();
+    // _loadSignal?.cancel();
     super.dispose();
   }
 
@@ -412,36 +412,37 @@ class _SongArtState extends State<SongArt> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget child;
-    if (useScopedStorage) {
-      final cacheSize = getCacheSize();
-      child = !loaded
-          ? SizedBox.square(dimension: _artSize.toDouble())
-          : _bytes == null
-              ? _buildPlaceholder()
-              : Image.memory(
-                  _bytes!,
-                  cacheHeight: cacheSize,
-                  cacheWidth: cacheSize,
-                );
-    } else {
-      final artPath = widget.song.artPath;
-      var file = artPath == null ? null : File(artPath);
-      if (artPath == null || !file!.existsSync()) {
-        child = _buildPlaceholder();
-      } else {
-        final cacheSize = getCacheSize();
-        child = Image.file(
-          file,
-          cacheHeight: cacheSize,
-          cacheWidth: cacheSize,
-        );
-      }
-    }
-    return SizedBox.square(
-      dimension: _artSize.toDouble(),
-      child: child,
-    );
+    // final Widget child;
+    // if (useScopedStorage) {
+    //   final cacheSize = getCacheSize();
+    //   child = !loaded
+    //       ? SizedBox.square(dimension: _artSize.toDouble())
+    //       : _bytes == null
+    //           ? _buildPlaceholder()
+    //           : Image.memory(
+    //               _bytes!,
+    //               cacheHeight: cacheSize,
+    //               cacheWidth: cacheSize,
+    //             );
+    // } else {
+    //   final artPath = widget.song.artPath;
+    //   var file = artPath == null ? null : File(artPath);
+    //   if (artPath == null || !file!.existsSync()) {
+    //     child = _buildPlaceholder();
+    //   } else {
+    //     final cacheSize = getCacheSize();
+    //     child = Image.file(
+    //       file,
+    //       cacheHeight: cacheSize,
+    //       cacheWidth: cacheSize,
+    //     );
+    //   }
+    // }
+    // return SizedBox.square(
+    //   dimension: _artSize.toDouble(),
+    //   child: child,
+    // );
+    return const SizedBox();
   }
 }
 
@@ -581,11 +582,11 @@ class Song {
       );
 
   /// Returns a markup of what data to get from the cursor.
-  static NativeCursorGetBatch createBatch(NativeCursor cursor) =>
-      cursor.batchedGet()
-        ..getInt(0)
-        ..getString(1)
-        ..getInt(2)
-        ..getString(3)
-        ..getString(4);
+  // static NativeCursorGetBatch createBatch(NativeCursor cursor) =>
+  //     cursor.batchedGet()
+  //       ..getInt(0)
+  //       ..getString(1)
+  //       ..getInt(2)
+  //       ..getString(3)
+  //       ..getString(4);
 }
